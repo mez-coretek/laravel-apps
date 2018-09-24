@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use Illuminate\Contracts\Container\Container;
+use \Symfony\Component\Console\Output\ConsoleOutput;
 
 class AppManager
 {
@@ -101,14 +102,24 @@ class AppManager
      */
     public function id()
     {
-        if (is_null($this->appId)) {
-            $this->appId = (string) $this->idForUrl($this->container['request']->getUri());
-        }
+        if($this->container->runningInConsole()) {
+            if(isset($this->urls()[$this->container->environment()])) {
+                $this->appId = $this->container->environment();
+            } else {
+                $output = new ConsoleOutput();
+                $output->writeln("<error>Environment Not Set!</error>");
+                exit;
+            }
+        } else {
+            if (is_null($this->appId)) {
+                $this->appId = (string) $this->idForUrl($this->container['request']->getUri());
+            }
 
-        if (func_num_args() > 0) {
-            return in_array($this->appId, is_array(func_get_arg(0)) ? func_get_arg(0) : func_get_args());
+            if (func_num_args() > 0) {
+                return in_array($this->appId, is_array(func_get_arg(0)) ? func_get_arg(0) : func_get_args());
+            }
         }
-
+        
         return $this->appId;
     }
 
